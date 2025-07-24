@@ -5,7 +5,9 @@ use App\Http\Controllers\BeritaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\KomentarController;
+use App\Models\Kategori;    
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\KategoriController;
 
 // 🌐 Halaman awal (welcome)
 Route::get('/', function () {
@@ -27,6 +29,7 @@ Route::middleware('auth')->group(function () {
 
     // 📰 CRUD Berita (hanya untuk berita milik user sendiri)
     Route::resource('berita', BeritaController::class)->except(['show']);
+    Route::resource('kategori', KategoriController::class);
 
     // 👁️‍🗨️ Route detail berita (semua user bisa lihat)
     Route::get('/dashboard/berita/{berita}', [BeritaController::class, 'show'])

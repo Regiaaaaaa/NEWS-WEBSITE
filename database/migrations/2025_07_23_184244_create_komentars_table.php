@@ -11,19 +11,21 @@ return new class extends Migration
      */
     public function up()
 {
-    Schema::create('likes', function (Blueprint $table) {
+    Schema::create('komentars', function (Blueprint $table) {
         $table->id();
         $table->foreignId('user_id')->constrained()->onDelete('cascade');
         $table->foreignId('berita_id')->constrained()->onDelete('cascade');
+        $table->text('isi');
         $table->timestamps();
     });
 }
+
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('likes');
+        Schema::dropIfExists('komentars');
     }
 };

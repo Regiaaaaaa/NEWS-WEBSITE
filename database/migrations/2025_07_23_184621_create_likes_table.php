@@ -11,22 +11,19 @@ return new class extends Migration
      */
     public function up()
 {
-    Schema::create('beritas', function (Blueprint $table) {
+    Schema::create('likes', function (Blueprint $table) {
         $table->id();
         $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->string('judul');
-        $table->text('isi');
-        $table->string('gambar')->nullable(); // tambah kolom gambar
+        $table->foreignId('berita_id')->constrained()->onDelete('cascade');
         $table->timestamps();
     });
 }
-
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('beritas');
+        Schema::dropIfExists('likes');
     }
 };

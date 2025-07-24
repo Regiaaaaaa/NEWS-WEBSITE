@@ -19,6 +19,7 @@ class Berita extends Model
         'judul',
         'isi',
         'gambar',
+        "kategori_id"
     ];
 
     /**
@@ -37,6 +38,10 @@ class Berita extends Model
 public function likes()
 {
     return $this->hasMany(Like::class);
+}
+public function kategori()
+{
+    return $this->belongsTo(Kategori::class);
 }
 
 }

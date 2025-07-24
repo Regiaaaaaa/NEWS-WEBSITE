@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Berita;
+use App\Models\Kategori; // Add this import
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -15,16 +16,29 @@ class BeritaController extends Controller
        $this->middleware('auth')->except(['show']);
    }
 
-  public function index()
+public function index(Request $request)
 {
-    // Ganti dari semua berita jadi cuma berita user yang login
-    $semuaBerita = Berita::where('user_id', auth()->id())->latest()->get();
-    return view('berita.index', compact('semuaBerita'));
+    $query = Berita::query();
+
+    // Kalau ada kategori diklik, filter berdasarkan kategori
+    if ($request->has('kategori')) {
+        $query->where('kategori_id', $request->kategori);
+    }
+
+    // Ambil semua berita terbaru
+    $semuaBerita = $query->with('kategori', 'user')->latest()->get();
+
+    // Ambil semua kategori untuk navbar filter
+    $kategoris = Kategori::all();
+
+    return view('berita.index', compact('semuaBerita', 'kategoris'));
 }
 
    public function create()
    {
-       return view('berita.create');
+       // Add this line to fetch categories
+       $kategoris = Kategori::all();
+       return view('berita.create', compact('kategoris'));
    }
 
    public function store(Request $request)
@@ -32,6 +46,7 @@ class BeritaController extends Controller
        $validated = $request->validate([
            'judul' => 'required|max:255',
            'isi' => 'required',
+           'kategori_id' => 'required|exists:kategoris,id', // Add validation for kategori_id
            'gambar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
        ]);
 
@@ -60,7 +75,9 @@ class BeritaController extends Controller
            abort(403, 'Anda tidak dapat mengedit berita ini.');
        }
        
-       return view('berita.edit', compact('berita'));
+       // Add categories for edit form
+       $kategoris = Kategori::all();
+       return view('berita.edit', compact('berita', 'kategoris'));
    }
 
    public function update(Request $request, $id)
@@ -75,6 +92,7 @@ class BeritaController extends Controller
        $validated = $request->validate([
            'judul' => 'required|max:255',
            'isi' => 'required',
+           'kategori_id' => 'required|exists:kategoris,id', // Add validation for kategori_id
            'gambar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
        ]);
 
@@ -91,21 +109,26 @@ class BeritaController extends Controller
        return redirect()->route('berita.index')->with('success', 'Berita berhasil diupdate.');
    }
 
-   public function destroy($id)
-   {
-       $berita = Berita::findOrFail($id);
-       
-       // Manual check - hanya pemilik yang bisa hapus
-       if (auth()->id() !== $berita->user_id) {
-           abort(403, 'Anda tidak dapat menghapus berita ini.');
-       }
+public function destroy(Request $request, $id)
+{
+    $berita = Berita::findOrFail($id);
 
-       if ($berita->gambar) {
-           Storage::disk('public')->delete($berita->gambar);
-       }
+    if (auth()->id() !== $berita->user_id) {
+        abort(403, 'Anda tidak dapat menghapus berita ini.');
+    }
 
-       $berita->delete();
+    if ($berita->gambar) {
+        Storage::disk('public')->delete($berita->gambar);
+    }
 
-       return redirect()->route('berita.index')->with('success', 'Berita berhasil dihapus.');
-   }
+    $berita->delete();
+
+    // AJAX response
+    if ($request->expectsJson()) {
+        return response()->json(['message' => 'Berita berhasil dihapus']);
+    }
+
+    return redirect()->route('berita.index')->with('success', 'Berita berhasil dihapus.');
+}
+
 }
